@@ -16,3 +16,4 @@ pom.xml
 .repl-history
 .DS_Store
 .boot
+.repl
