@@ -1,0 +1,10 @@
+(page "index.html"
+  (:require [clojure.browser.repl]))
+
+(defc person-name "paul")
+
+(html
+  (head
+    (title "hello world"))
+  (body
+    (div (text "Hello, ~{person-name}"))))

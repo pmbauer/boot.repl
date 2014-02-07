@@ -3,6 +3,7 @@
 /classes
 /checkouts
 /out
+/public
 pom.xml
 *.swn
 *.swo
