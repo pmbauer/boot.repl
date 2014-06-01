@@ -52,7 +52,8 @@ boot brepl
 # after repl loads, refresh http://localhost:8000/index.html
 
 # now in the repl you can do things like
-cljs.user=> (reset! tailrecursion.hoplon.app_pages.G__5595/person_name "michael")
+cljs.user=> (ns tailrecursion.hoplon.app_pages._index_DOT_html)
+cljs.user=> (reset! person-name "michael")
 
 # ... and the hello message will change (note the gensym means this ns is different each time)
 ```

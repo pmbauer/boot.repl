@@ -28,8 +28,8 @@
   [& [cmd]]
   ;; todo: configure clojurescript/austin versions ??
   (core/set-env!
-   :dependencies '[[org.clojure/clojurescript "0.0-2156"]
-                   [com.cemerick/austin "0.1.3"
+   :dependencies '[[org.clojure/clojurescript "0.0-2227"]
+                   [com.cemerick/austin "0.1.4"
                     :exclusions [org.clojure/clojurescript]]])
   (require 'cemerick.piggieback)
   (fn [continue]
