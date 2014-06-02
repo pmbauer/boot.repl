@@ -1,19 +1,19 @@
 (ns pmbauer.boot.task.cljs
   (:refer-clojure :exclude [+])
-  (:require [tailrecursion.boot.core :as core]
+  (:require [tailrecursion.boot.core :as boot]
             [clojure.java.io :as io]))
 
 (def ^:dynamic repl-env nil)
 
 (def init-scripts
   {:phantomjs
-   (constantly
+   (delay
     '(do (require 'cemerick.austin
                   'cemerick.austin.repls)
          (cemerick.austin.repls/cljs-repl (cemerick.austin/exec-env))))
 
    :browser
-   (fn []
+   (delay
      (require 'cemerick.austin
               'cemerick.austin.repls)
      (alter-var-root #'repl-env (constantly ((resolve 'cemerick.austin/repl-env))))
@@ -21,23 +21,43 @@
      `(cemerick.austin.repls/cljs-repl repl-env))
 
    nil
-   (constantly '(do))})
+   (delay '(do))})
 
-(core/deftask +
+(defn wrap-init-cljs-repl
+  [init-script]
+  (with-local-vars
+      [wrap-init-cljs-repl'
+       (fn [h]
+         ;; this needs to be a var, since it's in the nREPL session
+         (with-local-vars [init-cljs-repl-sentinel nil]
+           (fn [{:keys [session transport code] :as msg}]
+             (let [msg (atom msg)]
+               (when-not (@session init-cljs-repl-sentinel)
+                 (swap! session #(do (swap! msg assoc :code
+                                            (str "(do " code (pr-str init-script) ")"))
+                                     (assoc % init-cljs-repl-sentinel true))))
+               (h @msg)))))]
+    (doto wrap-init-cljs-repl'
+      ;; set-descriptor! currently nREPL only accepts a var
+      ((resolve 'clojure.tools.nrepl.middleware/set-descriptor!)
+       {:requires #{(resolve 'clojure.tools.nrepl.middleware.session/session)
+                    (resolve 'cemerick.piggieback/wrap-cljs-repl)}
+        :expects #{"eval"}})
+      (alter-var-root (constantly @wrap-init-cljs-repl')))))
+
+(boot/deftask +
   "instrument task chain with cljs bits"
   [& [cmd]]
-  ;; todo: configure clojurescript/austin versions ??
-  (core/set-env!
-   :dependencies '[[org.clojure/clojurescript "0.0-2227"]
-                   [com.cemerick/austin "0.1.4"
-                    :exclusions [org.clojure/clojurescript]]])
+  (assert (some (comp #{'org.clojure/clojurescript} first) (boot/get-env :dependencies))
+          "A version of org.clojure/clojurescript must be in boot :dependencies")
+  (boot/set-env! :dependencies '[[com.cemerick/austin "0.1.4" :exclusions [org.clojure/clojurescript]]])
   (require 'cemerick.piggieback)
   (fn [continue]
     (fn [event]
       (continue (assoc event
                   :pmbauer.boot.task.repl/config
-                  {:repl-options {:custom-eval ((get init-scripts cmd))}
-                   :middlewares [(resolve 'cemerick.piggieback/wrap-cljs-repl)]})))))
+                  {:middlewares [(wrap-init-cljs-repl @(get init-scripts cmd))
+                                 (resolve 'cemerick.piggieback/wrap-cljs-repl)]})))))
 
 (core/deftask +brepl
   "inject browser-repl connect directive into html"
