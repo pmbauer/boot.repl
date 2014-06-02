@@ -4,7 +4,7 @@
 
 (defn -injection [source]
   (let [header-script-path [:head [:script last-of-type]]
-        header-script? (not (empty? (select (html-resource source) header-script-target)))]
+        header-script? (not (empty? (select (html-resource source) header-script-path)))]
     (if header-script?
       {:path header-script-path
        :script (browser-connected-repl-js)}

@@ -59,13 +59,17 @@
                   {:middlewares [(wrap-init-cljs-repl @(get init-scripts cmd))
                                  (resolve 'cemerick.piggieback/wrap-cljs-repl)]})))))
 
-(core/deftask +brepl
+(boot/deftask +brepl
   "inject browser-repl connect directive into html"
   [& paths]
-  (core/set-env! :dependencies '[[enlive "1.1.5"]])
+  (boot/set-env! :dependencies '[[enlive "1.1.5"]])
   (require 'pmbauer.boot.task.cljs.inject)
-  (core/with-pre-wrap
-    (let [inject (resolve 'pmbauer.boot.task.cljs.inject/-inject-brepl)]
-      (doseq [filename paths]
-        (let [f (io/file filename)]
+  (let [path-patterns (map re-pattern (or paths ["index.html"]))
+        ;;output-dir (boot/mkoutdir! ::brepl-instrumented)
+        ]
+    (boot/with-pre-wrap
+      (let [inject (resolve 'pmbauer.boot.task.cljs.inject/-inject-brepl)]
+        (println "Instrumenting html with browser repl directive ...")
+        (doseq [f (->> (boot/out-files) (boot/by-re path-patterns) doall)]
+          (println "•" (boot/relative-path f))
           (spit f (inject f)))))))
