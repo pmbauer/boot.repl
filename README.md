@@ -25,29 +25,16 @@ boot [cljs/+ :phantomjs] repl/repl
 
 # launches a cljs repl that a browser can attach to
 boot [cljs/+ :browser] repl/repl
-
-# also instruments an html file so it will attach to browser repl
-# on load
-boot [cljs/+ :browser] [cljs/+brepl \"public/index.html\"] repl/repl
 ```
 
 ### hoplon browser repl
 
-There are still some hoops to jump through, but it works.
-
 ```
-# for some reason, the browser repl breaks when hosting from the file system
-pushd ./public; python -m SimpleHTTPServer
-
-# in another tab ...
-# compile public/index.html
-boot hoplon
-
-# have not yet determined what triggers copying the index.html output
-# file to ./public  For now, two sepparate steps instead of chaining via
-# boot hoplon brepl
-
+# use brepl example task
 boot brepl
+
+# in another terminal ...
+boot [repl/repl :connect]
 
 # after repl loads, refresh http://localhost:8000/index.html
 
@@ -55,7 +42,12 @@ boot brepl
 cljs.user=> (ns tailrecursion.hoplon.app_pages._index_DOT_html)
 cljs.user=> (reset! person-name "michael")
 
-# ... and the hello message will change (note the gensym means this ns is different each time)
+# ... and the hello message will change
+# The brepl example task also includes a watch,
+# so editing hoplon source files will recompile the target artifacts,
+# including the brepl html instrumentation.
+# Refresh the browser to get source updates and reconnect to brepl session.
+# There is some jankiness, may need to refresh a few times in this case.
 ```
 
 ## License
