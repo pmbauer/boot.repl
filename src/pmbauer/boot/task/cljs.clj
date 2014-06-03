@@ -64,12 +64,10 @@
   [& paths]
   (boot/set-env! :dependencies '[[enlive "1.1.5"]])
   (require 'pmbauer.boot.task.cljs.inject)
-  (let [path-patterns (map re-pattern (or paths ["index.html"]))
-        ;;output-dir (boot/mkoutdir! ::brepl-instrumented)
-        ]
+  (let [path-patterns (map re-pattern (or paths ["index.html"]))]
     (boot/with-pre-wrap
       (let [inject (resolve 'pmbauer.boot.task.cljs.inject/-inject-brepl)]
         (println "Instrumenting html with browser repl directive ...")
-        (doseq [f (->> (boot/out-files) (boot/by-re path-patterns) doall)]
+        (doseq [f (->> (boot/src-files) (boot/by-re path-patterns))]
           (println "•" (boot/relative-path f))
           (spit f (inject f)))))))
